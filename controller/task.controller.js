@@ -2,7 +2,24 @@ const Task = require("../models/task.model")
 
 module.exports.getTask = async (req, res) => {
     try {
-        const result = await Task.find({})
+        let query = Task.find({});
+
+        // Filtering tasks based on parameters
+        if (req.query.status) {
+            query = query.where('status').equals(req.query.status);
+        }
+
+        // Add more filters as needed...
+
+        // Sorting tasks based on parameters
+        if (req.query.sortBy) {
+            const sortOptions = req.query.sortBy.split(':');
+            const sortField = sortOptions[0];
+            const sortOrder = sortOptions[1] === 'desc' ? -1 : 1;
+            query = query.sort({ [sortField]: sortOrder });
+        }
+
+        const result = await query.exec();
 
         res.status(200).json({
             status: "Success",
@@ -40,9 +57,8 @@ module.exports.addTask = async (req, res) => {
 
 
 module.exports.updateTask = async (req, res, next) => {
-    const { id } = req.params
     try {
-        const { id } = req.body
+        const { id } = req.params
         const result = await Task.updateOne({ _id: id }, req.body, { runValidators: true })
         if (!result.nModified) {
             res.status(200).json({

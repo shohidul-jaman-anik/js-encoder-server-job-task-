@@ -114,6 +114,7 @@ app.get('/profile', passport.authenticate('jwt', { session: false }),
 );
 
 
+
 // Resource not  found
 app.use('/', (req, res, next) => {
     res.status(404).json({
