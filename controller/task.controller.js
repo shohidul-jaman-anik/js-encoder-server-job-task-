@@ -12,10 +12,9 @@ module.exports.getTask = async (req, res) => {
         // Add more filters as needed...
 
         // Sorting tasks based on parameters
-        if (req.query.sortBy) {
-            const sortOptions = req.query.sortBy.split(':');
-            const sortField = sortOptions[0];
-            const sortOrder = sortOptions[1] === 'desc' ? -1 : 1;
+        if (req.query.sort) {
+            const sortField = req.query.sort;
+            const sortOrder = req.query.order === 'desc' ? -1 : 1;
             query = query.sort({ [sortField]: sortOrder });
         }
 
@@ -25,16 +24,16 @@ module.exports.getTask = async (req, res) => {
             status: "Success",
             message: "Get task successfully",
             data: result
-        })
+        });
 
     } catch (error) {
         res.status(400).json({
             status: "fail",
             message: "Couldn't get task",
-            data: result
-        })
+            error: error.message
+        });
     }
-}
+};
 
 
 module.exports.addTask = async (req, res) => {
@@ -58,20 +57,22 @@ module.exports.addTask = async (req, res) => {
 
 module.exports.updateTask = async (req, res, next) => {
     try {
-        const { id } = req.params
+        const id = req.params.id
+        console.log(id)
         const result = await Task.updateOne({ _id: id }, req.body, { runValidators: true })
-        if (!result.nModified) {
-            res.status(200).json({
+        if (result.nModified === 0) {
+            return res.status(200).json({
                 status: "Fail",
                 message: "Couldn't update the Task"
             })
         }
-        res.status(200).json({
+        return res.status(200).json({
             status: "Success",
             message: "Successfully update the Task",
             data: result
         })
     } catch (error) {
+        console.log(error, "error")
         res.status(200).json({
             status: "Fail",
             message: "Couldn't update the Task",
