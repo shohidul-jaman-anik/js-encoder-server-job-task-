@@ -1,11 +1,6 @@
-
 const express = require('express')
 const cors = require('cors')
-const bcrypt = require('bcrypt');
-const User = require('./models/user.model');
-var jwt = require('jsonwebtoken');
 var passport = require('passport');
-const saltRounds = 10;
 const app = express()
 require("dotenv").config()
 const port = 3000
@@ -23,9 +18,10 @@ require("./config/passport")
 
 
 const taskManagement = require('./route/task.route')
+const userRoute = require('./route/user.route')
 
 app.use("/taskManagement", taskManagement)
-
+app.use("/", userRoute)
 
 
 // Home  Route
@@ -33,72 +29,6 @@ app.get('/', (req, res) => {
     res.send('<h1>Welcome to the server</h1>')
 })
 
-
-// Register  Route
-app.post('/register', async (req, res) => {
-    try {
-        const user = await User.findOne({ username: req.body.username })
-
-        if (user) return res.status(400).send("User already exixt")
-
-        bcrypt.hash(req.body.password, saltRounds, async (err, hash) => {
-            const newUser = new User({
-                username: req.body.username,
-                password: hash,
-            })
-
-            await newUser.save().then((user) => {
-                res.send({
-                    success: true,
-                    message: "User is created successfully",
-                    user: {
-                        id: user._id,
-                        username: user.username
-                    }
-                })
-            }).catch((error) => {
-                console.log(error)
-                res.send({
-                    success: false,
-                    message: "User is not created",
-                    error: error
-                })
-            })
-        });
-    } catch (error) {
-        res.status(500).send(error.message)
-    }
-})
-
-// Login  Route
-app.post('/login', async (req, res) => {
-    const user = await User.findOne({ username: req.body.username })
-    if (!user) {
-        return res.status(401).send({
-            success: false,
-            message: "User is not found"
-        })
-    }
-
-    if (!bcrypt.compareSync(req.body.password, user.password)) {
-        return res.status(401).send({
-            success: false,
-            message: "Incorrect Password"
-        })
-    }
-
-    const payload = {
-        id: user._id,
-        username: user.username
-    }
-    const token = jwt.sign(payload, process.env.SECRET_KEY, { expiresIn: "2d" })
-
-    return res.status(200).send({
-        success: true,
-        message: "User is login successfully",
-        token: "Bearer " + token
-    })
-})
 
 // Profile  Route
 app.get('/profile', passport.authenticate('jwt', { session: false }),
